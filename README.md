@@ -3,11 +3,11 @@
 A Claude Code plugin marketplace for MFDC. Add it in Claude Code with:
 
 ```
-/plugin marketplace add /home/user/hdd/src/mfdc/agent-marketplace
+/plugin marketplace add MomsFriendlyDevCo/agent-marketplace
 ```
 
-(or a git URL, once this is pushed somewhere) and then install individual
-plugins with `/plugin install <plugin-name>@mfdc-agent-marketplace`.
+and then install individual plugins with
+`/plugin install <plugin-name>@mfdc-agent-marketplace`.
 
 ## Structure
 
