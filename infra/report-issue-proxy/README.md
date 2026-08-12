@@ -8,7 +8,7 @@ gets installed. The plugin only needs this Worker's URL and a
 Slack message", independently rotatable, and much lower-stakes than the
 Freedcamp API secret or the Slack webhook URL it protects.
 
-See `src/index.ts` for the implementation: `POST /report-issue` with a
+See `src/index.js` for the implementation: `POST /report-issue` with a
 `{ title, description, type, priority }` JSON body and an
 `Authorization: Bearer <PROXY_AUTH_TOKEN>` header.
 

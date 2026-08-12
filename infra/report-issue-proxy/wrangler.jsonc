@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "nmc-report-issue-proxy",
-  "main": "src/index.ts",
+  "main": "src/index.js",
   "compatibility_date": "2026-08-12",
   "observability": {
     "enabled": true,

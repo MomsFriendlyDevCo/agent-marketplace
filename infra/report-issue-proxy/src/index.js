@@ -10,35 +10,19 @@
  * `npx wrangler deploy` (see README.md in this directory).
  */
 
-export interface Env {
-  PROXY_AUTH_TOKEN: string;
-  FREEDCAMP_API_KEY: string;
-  FREEDCAMP_API_SECRET: string;
-  FREEDCAMP_PROJECT_ID: string;
-  SLACK_WEBHOOK_URL: string;
-  AUTH_RATE_LIMITER: RateLimit;
-}
-
 const FREEDCAMP_BASE = "https://freedcamp.com/api/v1";
 
-const ISSUE_TYPE_BY_FLAG: Record<string, string> = { fix: "Bug", feature: "Feature", refactor: "Task" };
-const PRIORITY_BY_FLAG: Record<string, number> = { low: 1, medium: 2, high: 3 };
+const ISSUE_TYPE_BY_FLAG = { fix: "Bug", feature: "Feature", refactor: "Task" };
+const PRIORITY_BY_FLAG = { low: 1, medium: 2, high: 3 };
 
-interface ReportIssueRequest {
-  title: string;
-  description: string;
-  type: "fix" | "feature" | "refactor";
-  priority: "low" | "medium" | "high";
-}
-
-function json(data: unknown, status = 200): Response {
+function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: { "Content-Type": "application/json" },
   });
 }
 
-async function timingSafeTokenMatch(a: string, b: string): Promise<boolean> {
+async function timingSafeTokenMatch(a, b) {
   const encoder = new TextEncoder();
   const bufA = encoder.encode(a);
   const bufB = encoder.encode(b);
@@ -46,7 +30,7 @@ async function timingSafeTokenMatch(a: string, b: string): Promise<boolean> {
   return crypto.subtle.timingSafeEqual(bufA, bufB);
 }
 
-async function freedcampAuthParams(apiKey: string, apiSecret: string) {
+async function freedcampAuthParams(apiKey, apiSecret) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -60,19 +44,19 @@ async function freedcampAuthParams(apiKey: string, apiSecret: string) {
   return { api_key: apiKey, timestamp, hash };
 }
 
-function mapType(type: ReportIssueRequest["type"]): string {
+function mapType(type) {
   const mapped = ISSUE_TYPE_BY_FLAG[type];
   if (!mapped) throw new Error(`unreachable: unmapped type ${type}`);
   return mapped;
 }
 
-function mapPriority(priority: ReportIssueRequest["priority"]): number {
+function mapPriority(priority) {
   const mapped = PRIORITY_BY_FLAG[priority];
   if (!mapped) throw new Error(`unreachable: unmapped priority ${priority}`);
   return mapped;
 }
 
-async function createFreedcampIssue(env: Env, req: ReportIssueRequest) {
+async function createFreedcampIssue(env, req) {
   const auth = await freedcampAuthParams(env.FREEDCAMP_API_KEY, env.FREEDCAMP_API_SECRET);
   const body = new URLSearchParams({
     ...auth,
@@ -88,7 +72,7 @@ async function createFreedcampIssue(env: Env, req: ReportIssueRequest) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  const responseJson: any = await res.json().catch(() => null);
+  const responseJson = await res.json().catch(() => null);
 
   if (!res.ok || !responseJson || responseJson.error_id) {
     throw new Response(
@@ -97,10 +81,10 @@ async function createFreedcampIssue(env: Env, req: ReportIssueRequest) {
     );
   }
   const issue = responseJson.data?.issues?.[0];
-  return { id: issue?.id as string | undefined, url: issue?.url as string | undefined };
+  return { id: issue?.id, url: issue?.url };
 }
 
-async function postToSlack(env: Env, text: string) {
+async function postToSlack(env, text) {
   const res = await fetch(env.SLACK_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -115,23 +99,22 @@ async function postToSlack(env: Env, text: string) {
   }
 }
 
-function isValidRequest(value: unknown): value is ReportIssueRequest {
+function isValidRequest(value) {
   if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
   return (
-    typeof v.title === "string" &&
-    v.title.length > 0 &&
-    typeof v.description === "string" &&
-    v.description.length > 0 &&
-    typeof v.type === "string" &&
-    v.type in ISSUE_TYPE_BY_FLAG &&
-    typeof v.priority === "string" &&
-    v.priority in PRIORITY_BY_FLAG
+    typeof value.title === "string" &&
+    value.title.length > 0 &&
+    typeof value.description === "string" &&
+    value.description.length > 0 &&
+    typeof value.type === "string" &&
+    value.type in ISSUE_TYPE_BY_FLAG &&
+    typeof value.priority === "string" &&
+    value.priority in PRIORITY_BY_FLAG
   );
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname !== "/report-issue") return json({ ok: false, error: "not found" }, 404);
     if (request.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
@@ -156,7 +139,7 @@ export default {
       return json({ ok: false, error: "unauthorized" }, 401);
     }
 
-    let payload: unknown;
+    let payload;
     try {
       payload = await request.json();
     } catch {
@@ -184,4 +167,4 @@ export default {
       return json({ ok: false, error: String(e) }, 500);
     }
   },
-} satisfies ExportedHandler<Env>;
+};
