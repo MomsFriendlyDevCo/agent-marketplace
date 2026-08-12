@@ -15,5 +15,8 @@
       "category": "productivity",
       "source": "./plugins/mfdc"
     }
-  ]
+  ],
+  "renames": {
+    "report-issue": "mfdc"
+  }
 }
