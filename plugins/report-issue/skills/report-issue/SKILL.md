@@ -33,9 +33,16 @@ ticket but not the actual need. This block becomes the top of the initial-report
 
 ## 2. Export the chat log
 
-Run `/export` targeting `docs/exports/<SLUG>-<date>-chatlog.md`, creating that
-directory first if the repo doesn't already have one. Use a short kebab-case
-`<SLUG>` for the issue and today's date (`YYYY-MM-DD`).
+First work out today's `<PREFIX>`: `YYYYMMDD-NNN`, where `YYYYMMDD` is today's
+date and `NNN` is a zero-padded, per-day sequence number. Find `NNN` by
+scanning `docs/` and `docs/exports/` (creating the latter first if the repo
+doesn't already have it) for existing filenames starting with today's
+`YYYYMMDD-`, taking the highest `NNN` found, and incrementing it — start at
+`001` if none exist for today. Use the same `<PREFIX>` for all three files
+produced in this and the next step, so they're grouped together by filename.
+
+Run `/export` targeting `docs/exports/<PREFIX>_<SLUG>-chatlog.md`. Use a short
+kebab-case `<SLUG>` for the issue.
 
 **Stop and show the user the exported file path before going further.** A full
 session transcript can contain pasted secrets, tokens, or other people's names —
@@ -48,12 +55,12 @@ Check whether the repo already has a convention for standalone docs (a flat
 `docs/` directory with a naming pattern, an `rfcs/` folder, etc.) and follow it.
 If there's no existing convention, default to:
 
-- `docs/ISSUE-REPORT-<SLUG>-<date>.md` — the initial report:
+- `docs/<PREFIX>_ISSUE-REPORT-<SLUG>.md` — the initial report:
   - The X/Y block from step 1
   - Reported by / date
   - Reproduction steps or evidence, if any (screenshots, logs, quoted messages)
   - Current vs expected behaviour
-- `docs/ISSUE-PROPOSAL-<SLUG>-<date>.md` — the proposed change:
+- `docs/<PREFIX>_ISSUE-PROPOSAL-<SLUG>.md` — the proposed change:
   - Classification: Fix / Feature / Refactor
   - Proposed approach
   - Files/areas affected
@@ -90,8 +97,8 @@ priority, commit link) it prints:
 node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/report-issue.mjs \
   --title "<short title>" \
   --type fix|feature|refactor \
-  --report docs/ISSUE-REPORT-<SLUG>-<date>.md \
-  --proposal docs/ISSUE-PROPOSAL-<SLUG>-<date>.md \
+  --report docs/<PREFIX>_ISSUE-REPORT-<SLUG>.md \
+  --proposal docs/<PREFIX>_ISSUE-PROPOSAL-<SLUG>.md \
   --commit-url <commit URL from step 5> \
   --priority low|medium|high \
   --dry-run

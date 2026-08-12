@@ -17,8 +17,8 @@
  *   node report-issue.mjs \
  *     --title "Pet-friendly filter applies to non-park POIs" \
  *     --type fix \
- *     --report docs/ISSUE-REPORT-pet-friendly-filter-2026-08-12.md \
- *     --proposal docs/ISSUE-PROPOSAL-pet-friendly-filter-2026-08-12.md \
+ *     --report docs/20260812-001_ISSUE-REPORT-pet-friendly-filter.md \
+ *     --proposal docs/20260812-001_ISSUE-PROPOSAL-pet-friendly-filter.md \
  *     --commit-url https://github.com/org/repo/commit/<sha> \
  *     [--priority low|medium|high] [--dry-run] [--yes]
  *
