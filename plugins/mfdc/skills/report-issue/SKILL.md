@@ -9,9 +9,12 @@ version: 1.0.0
 This turns a chat discussion into a tracked, team-visible issue: three files
 committed to the repo (a chat-log export, an initial report, and a proposal), a
 Freedcamp issue, and a Slack post — all three files are required output, not
-optional extras. The last three steps are visible to other people and hard to
-undo — **do not run them without an explicit go-ahead** from the user at each
-gate below, even in an otherwise autonomous session.
+optional extras. Steps 0–4 are local and reversible — run them back-to-back
+without stopping for input in between (only pausing where a step itself says
+to ask, because it genuinely can't proceed without an answer). Push and
+Freedcamp/Slack are visible to other people and hard to undo — **do not run
+them without an explicit go-ahead** from the user at the two gates below, even
+in an otherwise autonomous session.
 
 ## 0. Confirm scope
 
@@ -62,13 +65,12 @@ replacing each with a `[REDACTED:<kind>]` marker, and prints a summary of what
 it redacted — check the console output. If it redacted anything, it also adds
 a note at the top of the file itself.
 
-**Stop and show the user the exported file path before going further.** This
-auto-redaction is a heuristic, defense-in-depth pass, not a guarantee — it
-only catches recognizable formats, not freeform secrets (a raw password with
-no label, an internal customer identifier, someone's name). A full session
-transcript can still contain pasted secrets, tokens, or other people's names —
-ask the user to skim it and tell you to redact or trim anything before it's
-committed. Do not commit it unreviewed.
+Don't stop here — continue straight to step 3. This auto-redaction is a
+heuristic, defense-in-depth pass, not a guarantee: it only catches recognizable
+formats, not freeform secrets (a raw password with no label, an internal
+customer identifier, someone's name). The user reviews the export together
+with the rest of the local commit at the push gate (step 5) — do not push or
+file anything before that review happens.
 
 ## 3. Write the two docs
 
@@ -99,12 +101,16 @@ the working tree. Commit locally with a plain, factual message. Do not push yet.
 
 ## 5. Gate: push
 
-Show the user the commit (`git show --stat`) and ask before pushing — pushing is
-what makes the commit link in the Freedcamp issue resolve, and it's a shared-state
-action. Once approved, push and derive the commit URL from `git remote get-url
-origin` (strip a trailing `.git`; if it's an SSH-style
-`git@host:org/repo`, convert to `https://host/org/repo`) plus `/commit/<sha>`.
-Don't assume any particular host or org — read it from the repo each time.
+This is the first stop since step 0 — show the user the commit (`git show
+--stat`) and the exported chat-log path, and ask them to skim the chat log
+specifically for anything the auto-redaction in step 2 missed (a raw password
+with no label, an internal customer identifier, someone's name) before
+approving. Pushing is what makes the commit link in the Freedcamp issue
+resolve, and it's a shared-state, hard-to-undo action — do not push unreviewed.
+Once approved, push and derive the commit URL from `git remote get-url origin`
+(strip a trailing `.git`; if it's an SSH-style `git@host:org/repo`, convert to
+`https://host/org/repo`) plus `/commit/<sha>`. Don't assume any particular
+host or org — read it from the repo each time.
 
 ## 6. Gate: Freedcamp + Slack
 
