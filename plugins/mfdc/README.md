@@ -30,9 +30,14 @@ and should never be given, the real Freedcamp API secret or Slack webhook URL
 
 #### Design notes
 
-- `skills/report-issue/scripts/report-issue.mjs` is Node-built-ins-only,
+- `skills/report-issue/scripts/report-issue.mjs` and
+  `skills/report-issue/scripts/export-chatlog.mjs` are Node-built-ins-only,
   deliberately dependency-free so this plugin never needs a `package.json` or
   `node_modules` installed alongside it.
+- `export-chatlog.mjs` exists because skills can't invoke the interactive
+  `/export` slash command directly — it reimplements just enough of it
+  (locate this session's `.jsonl` transcript via `CLAUDE_CODE_SESSION_ID`,
+  render to Markdown) to produce the chat-log export this skill commits.
 - The credential split (plugin holds a narrowly-scoped, rotatable proxy token;
   the proxy holds the real Freedcamp/Slack secrets) exists specifically because
   this is a *plugin* — meant to be installed into multiple repos/machines — and

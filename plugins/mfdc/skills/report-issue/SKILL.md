@@ -43,8 +43,18 @@ doesn't already have it) for existing filenames starting with today's
 `001` if none exist for today. Use the same `<PREFIX>` for all three files
 produced in this and the next step, so they're grouped together by filename.
 
-Run `/export` targeting `docs/exports/<PREFIX>_<SLUG>-chatlog.md`. Use a short
-kebab-case `<SLUG>` for the issue.
+Run the export script (a skill can't invoke the interactive `/export` slash
+command directly, so this reimplements the part of it needed here) targeting
+`docs/exports/<PREFIX>_<SLUG>-chatlog.md`. Use a short kebab-case `<SLUG>` for
+the issue:
+
+```
+node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/export-chatlog.mjs \
+  --out docs/exports/<PREFIX>_<SLUG>-chatlog.md
+```
+
+Run it from the repo root so the `--out` path resolves relative to the repo,
+same as the poster script in step 6.
 
 **Stop and show the user the exported file path before going further.** A full
 session transcript can contain pasted secrets, tokens, or other people's names —
@@ -135,11 +145,16 @@ that unless asked.
 
 ## Notes
 
-- `scripts/report-issue.mjs` is the only file in this skill with executable
-  logic — it's deliberately dependency-free (Node built-ins only), which is
-  what let it move from a project-local script into this plugin without
-  dragging a package.json or node_modules along. Don't add npm dependencies to
-  it; if you need something a built-in doesn't cover, implement it inline.
+- `scripts/report-issue.mjs` and `scripts/export-chatlog.mjs` are the only
+  files in this skill with executable logic — both are deliberately
+  dependency-free (Node built-ins only), which is what lets this plugin ship
+  without a package.json or node_modules along. Don't add npm dependencies to
+  either; if you need something a built-in doesn't cover, implement it inline.
+- `export-chatlog.mjs` locates the current transcript via the
+  `CLAUDE_CODE_SESSION_ID` env var (set by Claude Code for every session), not
+  by scanning `~/.claude/projects/` for the most-recently-modified file — that
+  would pick the wrong transcript whenever more than one Claude Code session
+  is open at once.
 - It does not talk to Freedcamp/Slack directly — it posts to a report-issue
   proxy Worker (source: this marketplace repo's `infra/report-issue-proxy`,
   deployed separately from wherever this plugin gets installed), which holds
