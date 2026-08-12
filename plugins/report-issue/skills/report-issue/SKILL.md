@@ -111,9 +111,12 @@ Only after the user confirms the preview, re-run the same command **without**
 `--yes` is passed — leave that prompt in place rather than passing `--yes`, it's
 the last checkpoint before the issue goes live and Slack fires.
 
-The script requires `REPORT_ISSUE_PROXY_URL` and `REPORT_ISSUE_PROXY_TOKEN`, set
-in the shell or in a `.env` file (it auto-loads one by walking up from the
-current directory). It does **not** need the real Freedcamp/Slack credentials —
+The script requires `REPORT_ISSUE_PROXY_URL`, `REPORT_ISSUE_PROXY_TOKEN`, and
+`REPORT_ISSUE_PROXY_PROJECT_ID` (all sharing the `REPORT_ISSUE_PROXY_` prefix;
+the last is the numeric Freedcamp project to file into and, unlike the token,
+isn't a secret — it's fine to commit in this repo's own `.env`), set in the
+shell or in a `.env` file (it auto-loads one by walking up from the current
+directory). It does **not** need the real Freedcamp/Slack credentials —
 those live only as Worker secrets on a separately-deployed proxy (source in this
 plugin's marketplace repo, under `infra/report-issue-proxy`; see that
 directory's README for deploy/rotation). If the proxy vars are unset it fails

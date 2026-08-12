@@ -3,10 +3,13 @@
  * repo). Holds the real Freedcamp/Slack credentials as Worker secrets so the
  * plugin itself never carries them — callers authenticate with
  * PROXY_AUTH_TOKEN, a narrowly-scoped, independently-rotatable value that only
- * grants "create one Freedcamp issue + post one Slack message", not general
- * Freedcamp/Slack account access.
+ * grants "create a Freedcamp issue + post one Slack message", not general
+ * Freedcamp/Slack account access. Note this scope now includes the caller's
+ * choice of `project_id` — the token authorizes issue creation in ANY project
+ * the Freedcamp API key can see, not just one fixed project, since a single
+ * proxy deployment is meant to serve every project a team files issues from.
  *
- * Deploy: wrangler secret put <NAME> for each of the five secrets below, then
+ * Deploy: wrangler secret put <NAME> for each of the four secrets below, then
  * `npx wrangler deploy` (see README.md in this directory).
  */
 
@@ -62,7 +65,7 @@ async function createFreedcampIssue(env, req) {
     ...auth,
     title: req.title,
     description: req.description,
-    project_id: env.FREEDCAMP_PROJECT_ID,
+    project_id: String(req.project_id),
     type: mapType(req.type),
     priority: String(mapPriority(req.priority)),
   });
@@ -106,6 +109,8 @@ function isValidRequest(value) {
     value.title.length > 0 &&
     typeof value.description === "string" &&
     value.description.length > 0 &&
+    (typeof value.project_id === "string" || typeof value.project_id === "number") &&
+    String(value.project_id).length > 0 &&
     typeof value.type === "string" &&
     value.type in ISSUE_TYPE_BY_FLAG &&
     typeof value.priority === "string" &&
@@ -147,7 +152,11 @@ export default {
     }
     if (!isValidRequest(payload)) {
       return json(
-        { ok: false, error: "body must be { title, description, type: fix|feature|refactor, priority: low|medium|high }" },
+        {
+          ok: false,
+          error:
+            "body must be { title, description, project_id, type: fix|feature|refactor, priority: low|medium|high }",
+        },
         400,
       );
     }
