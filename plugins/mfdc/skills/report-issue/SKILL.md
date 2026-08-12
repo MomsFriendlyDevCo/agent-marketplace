@@ -66,11 +66,13 @@ it redacted — check the console output. If it redacted anything, it also adds
 a note at the top of the file itself.
 
 Don't stop here — continue straight to step 3. This auto-redaction is a
-heuristic, defense-in-depth pass, not a guarantee: it only catches recognizable
-formats, not freeform secrets (a raw password with no label, an internal
-customer identifier, someone's name). The user reviews the export together
-with the rest of the local commit at the push gate (step 5) — do not push or
-file anything before that review happens.
+heuristic pass, not a guarantee: it only catches recognizable formats, not
+freeform secrets (a raw password with no label, an internal customer
+identifier, someone's name). It's still the only content-level check that
+runs, though — the user isn't asked to read the export at the push gate (step
+5), just to approve pushing. Keep `REDACTION_RULES` (in the script) current as
+new secret shapes come up rather than counting on a human catching what it
+misses.
 
 ## 3. Write the two docs
 
@@ -102,12 +104,13 @@ the working tree. Commit locally with a plain, factual message. Do not push yet.
 ## 5. Gate: push
 
 This is the first stop since step 0 — show the user the commit (`git show
---stat`) and the exported chat-log path, and ask them to skim the chat log
-specifically for anything the auto-redaction in step 2 missed (a raw password
-with no label, an internal customer identifier, someone's name) before
-approving. Pushing is what makes the commit link in the Freedcamp issue
-resolve, and it's a shared-state, hard-to-undo action — do not push unreviewed.
-Once approved, push and derive the commit URL from `git remote get-url origin`
+--stat`) and the step 2 auto-redaction summary (what was found, if anything),
+and ask for a plain go-ahead to push. Don't ask them to open and read through
+the export or the docs themselves — the auto-redaction pass is the content
+check; the ask here is just "OK to push?", not "please review this." Pushing
+is what makes the commit link in the Freedcamp issue resolve, and it's a
+shared-state, hard-to-undo action, so it still needs an explicit yes. Once
+approved, push and derive the commit URL from `git remote get-url origin`
 (strip a trailing `.git`; if it's an SSH-style `git@host:org/repo`, convert to
 `https://host/org/repo`) plus `/commit/<sha>`. Don't assume any particular
 host or org — read it from the repo each time.
@@ -171,8 +174,9 @@ that unless asked.
   would pick the wrong transcript whenever more than one Claude Code session
   is open at once.
 - `export-chatlog.mjs`'s `REDACTION_RULES` list is pattern-based (regex), so
-  it's necessarily incomplete — add new rules there as new secret shapes come
-  up, but don't treat it as a reason to skip the human-review gate below.
+  it's necessarily incomplete, and the user isn't asked to read the export
+  themselves before it's pushed (step 5) — this list is the only content-level
+  check that runs. Keep it current as new secret shapes come up.
 - It does not talk to Freedcamp/Slack directly — it posts to a report-issue
   proxy Worker (source: this marketplace repo's `infra/report-issue-proxy`,
   deployed separately from wherever this plugin gets installed), which holds
