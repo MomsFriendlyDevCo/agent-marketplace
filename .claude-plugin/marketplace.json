@@ -7,13 +7,13 @@
   },
   "plugins": [
     {
-      "name": "report-issue",
-      "description": "Turns a chat discussion into a tracked MFDC issue: separates the X/Y problem, writes a report + proposal, exports the chat log, commits, files a Freedcamp issue, and posts it to Slack.",
+      "name": "mfdc",
+      "description": "MFDC's internal Claude Code tooling, namespaced under /mfdc:*. Currently ships report-issue: separates the X/Y problem, writes a report + proposal, exports the chat log, commits, files a Freedcamp issue, and posts it to Slack.",
       "author": {
         "name": "MFDC"
       },
       "category": "productivity",
-      "source": "./plugins/report-issue"
+      "source": "./plugins/mfdc"
     }
   ]
 }

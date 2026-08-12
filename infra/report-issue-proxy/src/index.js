@@ -1,7 +1,7 @@
 /**
- * Proxy for the report-issue plugin (plugins/report-issue in this marketplace
- * repo). Holds the real Freedcamp/Slack credentials as Worker secrets so the
- * plugin itself never carries them — callers authenticate with
+ * Proxy for the report-issue skill of the mfdc plugin (plugins/mfdc in this
+ * marketplace repo). Holds the real Freedcamp/Slack credentials as Worker
+ * secrets so the plugin itself never carries them — callers authenticate with
  * PROXY_AUTH_TOKEN, a narrowly-scoped, independently-rotatable value that only
  * grants "create a Freedcamp issue + post one Slack message", not general
  * Freedcamp/Slack account access. Note this scope now includes the caller's

@@ -1,9 +1,9 @@
 # report-issue proxy
 
 Cloudflare Worker that holds the real Freedcamp/Slack credentials for the
-`report-issue` plugin (`plugins/report-issue` in this marketplace repo) so
-those credentials never have to travel with the plugin itself, wherever it
-gets installed. The plugin only needs this Worker's URL and a
+`report-issue` skill of the `mfdc` plugin (`plugins/mfdc` in this marketplace
+repo) so those credentials never have to travel with the plugin itself,
+wherever it gets installed. The plugin only needs this Worker's URL and a
 `PROXY_AUTH_TOKEN` — a value scoped to "create a Freedcamp issue in a caller-chosen
 project + post one Slack message", independently rotatable, and much
 lower-stakes than the Freedcamp API secret or the Slack webhook URL it
@@ -86,7 +86,7 @@ The whole reason this proxy exists is so the plugin can ship with *something*
 baked in instead of requiring per-machine secret setup. Three different calls:
 
 - **`REPORT_ISSUE_PROXY_URL`** — not a secret. Safe to hardcode as a default
-  in `.agents/skills/report-issue/scripts/report-issue.mjs` once deployed
+  in `plugins/mfdc/skills/report-issue/scripts/report-issue.mjs` once deployed
   (still overridable via env var, e.g. to point at a local `wrangler dev`
   instance while testing).
 - **`REPORT_ISSUE_PROXY_PROJECT_ID`** — also not a secret, but repo-specific:
