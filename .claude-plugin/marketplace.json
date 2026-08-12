@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "mfdc-agent-marketplace",
+  "description": "MFDC's internal marketplace of Claude Code plugins.",
+  "owner": {
+    "name": "MFDC"
+  },
+  "plugins": [
+    {
+      "name": "report-issue",
+      "description": "Turns a chat discussion into a tracked MFDC issue: separates the X/Y problem, writes a report + proposal, exports the chat log, commits, files a Freedcamp issue, and posts it to Slack.",
+      "author": {
+        "name": "MFDC"
+      },
+      "category": "productivity",
+      "source": "./plugins/report-issue"
+    }
+  ]
+}

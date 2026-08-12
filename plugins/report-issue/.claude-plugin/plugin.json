@@ -1,0 +1,9 @@
+{
+  "name": "report-issue",
+  "version": "1.0.0",
+  "description": "Turns a chat discussion into a tracked MFDC issue: writes a report + proposal, commits them, files a Freedcamp issue, and posts it to Slack.",
+  "author": {
+    "name": "MFDC"
+  },
+  "keywords": ["freedcamp", "slack", "issue-tracking", "mfdc"]
+}
