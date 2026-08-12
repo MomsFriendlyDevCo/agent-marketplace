@@ -113,6 +113,60 @@ function parseTranscript(transcriptPath) {
   return turns;
 }
 
+// Best-effort heuristic secret scan — a defense-in-depth pass, not a
+// guarantee. It catches recognizable formats and common
+// SECRET/TOKEN/PASSWORD/KEY-style assignments, but a human still has to
+// review the file (see SKILL.md step 2) before it's committed: freeform
+// pasted values (a raw password with no surrounding label, an internal
+// customer identifier, someone's name) won't match any of these patterns.
+const REDACTION_RULES = [
+  {
+    name: "private-key",
+    regex: /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
+    replace: () => "[REDACTED:private-key]",
+  },
+  { name: "aws-access-key", regex: /\bAKIA[0-9A-Z]{16}\b/g, replace: () => "[REDACTED:aws-access-key]" },
+  { name: "github-token", regex: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g, replace: () => "[REDACTED:github-token]" },
+  { name: "slack-token", regex: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, replace: () => "[REDACTED:slack-token]" },
+  {
+    name: "slack-webhook",
+    regex: /https:\/\/hooks\.slack\.com\/services\/\S+/g,
+    replace: () => "[REDACTED:slack-webhook]",
+  },
+  {
+    name: "jwt",
+    regex: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g,
+    replace: () => "[REDACTED:jwt]",
+  },
+  { name: "sk-api-key", regex: /\bsk-[A-Za-z0-9]{20,}\b/g, replace: () => "[REDACTED:sk-api-key]" },
+  {
+    name: "bearer-token",
+    regex: /\bBearer\s+[A-Za-z0-9\-_.=]{20,}/g,
+    replace: () => "Bearer [REDACTED:bearer-token]",
+  },
+  // KEY=value / KEY: value / KEY="value" where KEY looks secret-shaped —
+  // the broadest rule, so it runs last and only touches what nothing more
+  // specific already caught.
+  {
+    name: "env-assignment",
+    regex:
+      /\b([A-Za-z_][A-Za-z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|PWD|API_KEY|APIKEY|PRIVATE_KEY|CREDENTIAL)[A-Za-z0-9_]*)\s*([=:])\s*["']?([^\s"'`,;]{4,})["']?/gi,
+    replace: (_match, varName, sep) => `${varName}${sep} [REDACTED:env-assignment]`,
+  },
+];
+
+function redactSecrets(markdown) {
+  const counts = new Map();
+  let redacted = markdown;
+  for (const rule of REDACTION_RULES) {
+    redacted = redacted.replace(rule.regex, (...args) => {
+      counts.set(rule.name, (counts.get(rule.name) ?? 0) + 1);
+      return rule.replace(...args);
+    });
+  }
+  return { markdown: redacted, counts };
+}
+
 function renderMarkdown(turns, sessionId) {
   const md = [`# Chat log export`, "", `Session: \`${sessionId}\``, `Exported: ${new Date().toISOString()}`, ""];
 
@@ -155,11 +209,30 @@ function main() {
 
   const transcriptPath = findTranscriptPath(sessionId);
   const turns = parseTranscript(transcriptPath);
-  const markdown = renderMarkdown(turns, sessionId);
+  const rendered = renderMarkdown(turns, sessionId);
+  const { markdown, counts } = redactSecrets(rendered);
+
+  const totalRedactions = [...counts.values()].reduce((a, b) => a + b, 0);
+  const finalMarkdown =
+    totalRedactions === 0
+      ? markdown
+      : markdown.replace(
+          /\n\n/,
+          `\n\n> **${totalRedactions} potential secret(s) auto-redacted:** ${[...counts.entries()]
+            .map(([name, n]) => `${name} × ${n}`)
+            .join(", ")}. Heuristic scan only — still review the rest of this file for anything it missed before committing.\n\n`,
+        );
 
   mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(outPath, markdown, "utf8");
+  writeFileSync(outPath, finalMarkdown, "utf8");
   console.log(`Chat log exported to ${outPath}`);
+  if (totalRedactions > 0) {
+    console.log(
+      `Redacted ${totalRedactions} potential secret(s): ${[...counts.entries()]
+        .map(([name, n]) => `${name} (${n})`)
+        .join(", ")}`,
+    );
+  }
 }
 
 main();

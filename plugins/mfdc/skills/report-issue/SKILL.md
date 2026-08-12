@@ -56,8 +56,17 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/export-chatlog.mjs \
 Run it from the repo root so the `--out` path resolves relative to the repo,
 same as the poster script in step 6.
 
-**Stop and show the user the exported file path before going further.** A full
-session transcript can contain pasted secrets, tokens, or other people's names —
+The script auto-redacts common secret shapes it recognizes (API keys, tokens,
+private keys, `SECRET`/`TOKEN`/`PASSWORD`/`KEY`-style env assignments, etc.),
+replacing each with a `[REDACTED:<kind>]` marker, and prints a summary of what
+it redacted — check the console output. If it redacted anything, it also adds
+a note at the top of the file itself.
+
+**Stop and show the user the exported file path before going further.** This
+auto-redaction is a heuristic, defense-in-depth pass, not a guarantee — it
+only catches recognizable formats, not freeform secrets (a raw password with
+no label, an internal customer identifier, someone's name). A full session
+transcript can still contain pasted secrets, tokens, or other people's names —
 ask the user to skim it and tell you to redact or trim anything before it's
 committed. Do not commit it unreviewed.
 
@@ -155,6 +164,9 @@ that unless asked.
   by scanning `~/.claude/projects/` for the most-recently-modified file — that
   would pick the wrong transcript whenever more than one Claude Code session
   is open at once.
+- `export-chatlog.mjs`'s `REDACTION_RULES` list is pattern-based (regex), so
+  it's necessarily incomplete — add new rules there as new secret shapes come
+  up, but don't treat it as a reason to skip the human-review gate below.
 - It does not talk to Freedcamp/Slack directly — it posts to a report-issue
   proxy Worker (source: this marketplace repo's `infra/report-issue-proxy`,
   deployed separately from wherever this plugin gets installed), which holds

@@ -37,7 +37,11 @@ and should never be given, the real Freedcamp API secret or Slack webhook URL
 - `export-chatlog.mjs` exists because skills can't invoke the interactive
   `/export` slash command directly — it reimplements just enough of it
   (locate this session's `.jsonl` transcript via `CLAUDE_CODE_SESSION_ID`,
-  render to Markdown) to produce the chat-log export this skill commits.
+  render to Markdown) to produce the chat-log export this skill commits. It
+  also auto-redacts common secret shapes (API keys, tokens, private keys,
+  `SECRET`/`TOKEN`/`PASSWORD`-style env assignments) as a heuristic
+  defense-in-depth pass — not a substitute for the human review the skill
+  still requires before committing.
 - The credential split (plugin holds a narrowly-scoped, rotatable proxy token;
   the proxy holds the real Freedcamp/Slack secrets) exists specifically because
   this is a *plugin* — meant to be installed into multiple repos/machines — and
