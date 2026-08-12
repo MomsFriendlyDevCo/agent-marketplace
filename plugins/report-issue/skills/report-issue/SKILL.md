@@ -1,15 +1,17 @@
 ---
 name: report-issue
-description: Packages up a bug/feature/refactor discussed in this session into a report + proposal, commits them, files a Freedcamp issue, and posts it to Slack. Use when the user asks to "report this to MFDC", "file an issue", "log this for the team", or similar — not for routine code changes that don't need external tracking.
+description: Packages up a bug/feature/refactor discussed in this session into a chat-log export, a report, and a proposal, commits them, files a Freedcamp issue, and posts it to Slack. Use when the user asks to "report this to MFDC", "file an issue", "log this for the team", or similar — not for routine code changes that don't need external tracking.
 version: 1.0.0
 ---
 
 # Report an issue to MFDC
 
-This turns a chat discussion into a tracked, team-visible issue: two docs committed
-to the repo, a Freedcamp issue, and a Slack post. The last three steps are visible
-to other people and hard to undo — **do not run them without an explicit go-ahead**
-from the user at each gate below, even in an otherwise autonomous session.
+This turns a chat discussion into a tracked, team-visible issue: three files
+committed to the repo (a chat-log export, an initial report, and a proposal), a
+Freedcamp issue, and a Slack post — all three files are required output, not
+optional extras. The last three steps are visible to other people and hard to
+undo — **do not run them without an explicit go-ahead** from the user at each
+gate below, even in an otherwise autonomous session.
 
 ## 0. Confirm scope
 
@@ -122,9 +124,9 @@ around it.
 ## 7. Report back
 
 Once done, give the user: the Freedcamp issue number and URL, the commit URL, and
-the paths of the two docs. The issue number (e.g. `#1234`, printed by the script
-as `Freedcamp issue #<id>: <url>`) is the reference to use whenever the item comes
-up again — quote it when following up in Slack/Freedcamp or linking back to this
+the paths of all three committed files (chat-log export, report, proposal). The
+issue number (e.g. `#1234`, printed by the script as `Freedcamp issue #<id>:
+<url>`) is the reference to use whenever the item comes up again — quote it when following up in Slack/Freedcamp or linking back to this
 work later, rather than re-describing the issue. Don't summarize further than
 that unless asked.
 
