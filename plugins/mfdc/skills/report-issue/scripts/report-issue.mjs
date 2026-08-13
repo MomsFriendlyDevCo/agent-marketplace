@@ -23,14 +23,19 @@
  *     [--priority low|medium|high] [--dry-run] [--yes]
  *
  * Required env (see infra/report-issue-proxy/README.md for how these are
- * issued) — all three share the REPORT_ISSUE_PROXY_ prefix:
- *   REPORT_ISSUE_PROXY_URL         — the deployed Worker's base URL
- *   REPORT_ISSUE_PROXY_TOKEN       — bearer token scoped to this proxy only;
- *                                     NOT a Freedcamp/Slack credential, safe
- *                                     to rotate independently if it leaks
- *   REPORT_ISSUE_PROXY_PROJECT_ID  — numeric Freedcamp project_id to file
- *                                     into; not a secret, safe to commit in
- *                                     this repo's own .env
+ * issued) — all four share the REPORT_ISSUE_PROXY_ prefix:
+ *   REPORT_ISSUE_PROXY_URL              — the deployed Worker's base URL
+ *   REPORT_ISSUE_PROXY_TOKEN            — bearer token scoped to this proxy
+ *                                          only; NOT a Freedcamp/Slack
+ *                                          credential, safe to rotate
+ *                                          independently if it leaks
+ *   REPORT_ISSUE_PROXY_PROJECT_ID       — numeric Freedcamp project_id to
+ *                                          file into; not a secret, safe to
+ *                                          commit in this repo's own .env
+ *   REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID — Slack channel ID (e.g. C0123456789,
+ *                                          not a channel name) to post the
+ *                                          announcement to; also not a
+ *                                          secret, safe to commit
  * Missing vars are a hard error (not a silent no-op) — this posts to real,
  * team-visible systems and a silently-skipped post is worse than a crash.
  * A `.env` file is auto-loaded by walking up from the current directory if one
@@ -102,10 +107,16 @@ function requireEnv(names) {
 }
 
 async function postToProxy({ title, description, type, priority }) {
-  const { REPORT_ISSUE_PROXY_URL, REPORT_ISSUE_PROXY_TOKEN, REPORT_ISSUE_PROXY_PROJECT_ID } = requireEnv([
+  const {
+    REPORT_ISSUE_PROXY_URL,
+    REPORT_ISSUE_PROXY_TOKEN,
+    REPORT_ISSUE_PROXY_PROJECT_ID,
+    REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID,
+  } = requireEnv([
     "REPORT_ISSUE_PROXY_URL",
     "REPORT_ISSUE_PROXY_TOKEN",
     "REPORT_ISSUE_PROXY_PROJECT_ID",
+    "REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID",
   ]);
 
   const res = await fetch(`${REPORT_ISSUE_PROXY_URL.replace(/\/$/, "")}/report-issue`, {
@@ -114,7 +125,14 @@ async function postToProxy({ title, description, type, priority }) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${REPORT_ISSUE_PROXY_TOKEN}`,
     },
-    body: JSON.stringify({ title, description, project_id: REPORT_ISSUE_PROXY_PROJECT_ID, type, priority }),
+    body: JSON.stringify({
+      title,
+      description,
+      project_id: REPORT_ISSUE_PROXY_PROJECT_ID,
+      slack_channel_id: REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID,
+      type,
+      priority,
+    }),
   });
   const json = await res.json().catch(() => null);
   console.log(`Proxy HTTP ${res.status}:`, JSON.stringify(json, null, 2));
@@ -170,6 +188,9 @@ async function main() {
   console.log(`Type:     ${opts.type}   Priority: ${opts.priority}`);
   console.log(`Proxy:    ${process.env.REPORT_ISSUE_PROXY_URL ?? "(REPORT_ISSUE_PROXY_URL not set)"}`);
   console.log(`Project:  ${process.env.REPORT_ISSUE_PROXY_PROJECT_ID ?? "(REPORT_ISSUE_PROXY_PROJECT_ID not set)"}`);
+  console.log(
+    `Channel:  ${process.env.REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID ?? "(REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID not set)"}`,
+  );
   console.log(`Commit:   ${opts.commitUrl}`);
   console.log(`Report:   ${opts.report}`);
   console.log(`Proposal: ${opts.proposal}`);

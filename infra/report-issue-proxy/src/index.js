@@ -5,9 +5,16 @@
  * PROXY_AUTH_TOKEN, a narrowly-scoped, independently-rotatable value that only
  * grants "create a Freedcamp issue + post one Slack message", not general
  * Freedcamp/Slack account access. Note this scope now includes the caller's
- * choice of `project_id` — the token authorizes issue creation in ANY project
- * the Freedcamp API key can see, not just one fixed project, since a single
- * proxy deployment is meant to serve every project a team files issues from.
+ * choice of `project_id` and `slack_channel_id` — the token authorizes issue
+ * creation in ANY project the Freedcamp API key can see, and a message post
+ * to ANY channel the Slack bot has access to, not just one fixed project/
+ * channel, since a single proxy deployment is meant to serve every
+ * project/channel a team files issues from.
+ *
+ * Slack posting uses the `chat.postMessage` Web API method (a bot token,
+ * not an Incoming Webhook) specifically because Incoming Webhooks are bound
+ * to one fixed channel at creation time and can't take a per-request
+ * channel — see the "Scope of PROXY_AUTH_TOKEN" section in README.md.
  *
  * Deploy: wrangler secret put <NAME> for each of the four secrets below, then
  * `npx wrangler deploy` (see README.md in this directory).
@@ -87,14 +94,21 @@ async function createFreedcampIssue(env, req) {
   return { id: issue?.id, url: issue?.url };
 }
 
-async function postToSlack(env, text) {
-  const res = await fetch(env.SLACK_WEBHOOK_URL, {
+async function postToSlack(env, channelId, text) {
+  const res = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+    },
+    body: JSON.stringify({ channel: channelId, text }),
   });
-  if (!res.ok) {
-    const body = await res.text();
+  const body = await res.json().catch(() => null);
+
+  // chat.postMessage returns HTTP 200 even on failure (e.g. bad channel,
+  // missing scope) — the real result is in the JSON body's `ok` field, not
+  // the status code.
+  if (!res.ok || !body?.ok) {
     throw new Response(
       JSON.stringify({ ok: false, stage: "slack", status: res.status, body }, null, 2),
       { status: 502, headers: { "Content-Type": "application/json" } },
@@ -111,6 +125,8 @@ function isValidRequest(value) {
     value.description.length > 0 &&
     (typeof value.project_id === "string" || typeof value.project_id === "number") &&
     String(value.project_id).length > 0 &&
+    typeof value.slack_channel_id === "string" &&
+    value.slack_channel_id.length > 0 &&
     typeof value.type === "string" &&
     value.type in ISSUE_TYPE_BY_FLAG &&
     typeof value.priority === "string" &&
@@ -155,7 +171,7 @@ export default {
         {
           ok: false,
           error:
-            "body must be { title, description, project_id, type: fix|feature|refactor, priority: low|medium|high }",
+            "body must be { title, description, project_id, slack_channel_id, type: fix|feature|refactor, priority: low|medium|high }",
         },
         400,
       );
@@ -167,6 +183,7 @@ export default {
 
       await postToSlack(
         env,
+        payload.slack_channel_id,
         [`:mega: New issue filed to Freedcamp: *${payload.title}*`, freedcampUrl].join("\n"),
       );
 
