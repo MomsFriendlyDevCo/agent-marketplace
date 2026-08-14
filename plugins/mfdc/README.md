@@ -22,13 +22,27 @@ Turns a chat discussion into a tracked, team-visible MFDC issue. See
 #### Requirements
 
 This skill needs a deployed `report-issue-proxy` (source in this
-marketplace's `infra/report-issue-proxy`) and four env vars set wherever it
-runs, all sharing the `REPORT_ISSUE_PROXY_` prefix: `REPORT_ISSUE_PROXY_URL`,
-`REPORT_ISSUE_PROXY_TOKEN`, `REPORT_ISSUE_PROXY_PROJECT_ID`,
-`REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID`. It does not need, and should never be
-given, the real Freedcamp API secret or Slack bot token — those live only as
-Worker secrets on the proxy. See `infra/report-issue-proxy/README.md` for
-deploy instructions.
+marketplace's `infra/report-issue-proxy` — see that directory's README for
+deploy instructions) and four env vars, all sharing the `REPORT_ISSUE_PROXY_`
+prefix, set either in your shell or in a `.env` file (the script auto-loads
+one by walking up from the current directory):
+
+```bash
+# infra/report-issue-proxy's deployed Worker URL — not a secret
+REPORT_ISSUE_PROXY_URL=https://nmc-report-issue-proxy.<subdomain>.workers.dev
+
+# Bearer token scoped to this proxy only — a live credential, keep out of git
+REPORT_ISSUE_PROXY_TOKEN=<proxy token>
+
+# Numeric Freedcamp project_id to file issues into — not a secret, safe to commit
+REPORT_ISSUE_PROXY_PROJECT_ID=<freedcamp project id>
+
+# Slack channel ID to post to (e.g. C0123456789 — not a channel name) — not a secret, safe to commit
+REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID=<slack channel id>
+```
+
+It does not need, and should never be given, the real Freedcamp API secret or
+Slack bot token — those live only as Worker secrets on the proxy.
 
 #### Design notes
 
