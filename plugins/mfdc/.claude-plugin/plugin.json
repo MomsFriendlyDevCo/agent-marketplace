@@ -1,6 +1,6 @@
 {
   "name": "mfdc",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MFDC's internal Claude Code tooling, namespaced under /mfdc:*. Currently ships report-issue: turns a chat discussion into a tracked MFDC issue (report + proposal, chat-log export, Freedcamp issue, Slack post).",
   "author": {
     "name": "MFDC"

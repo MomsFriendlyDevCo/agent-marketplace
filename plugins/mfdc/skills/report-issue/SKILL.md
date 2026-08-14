@@ -86,7 +86,7 @@ If there's no existing convention, default to:
   - Reproduction steps or evidence, if any (screenshots, logs, quoted messages)
   - Current vs expected behaviour
 - `docs/<PREFIX>_ISSUE-PROPOSAL-<SLUG>.md` — the proposed change:
-  - Classification: Fix / Feature / Refactor
+  - Classification: CHORE / DOCS / FEATURE / FIX / REFACTOR / TEST
   - Proposed approach
   - Files/areas affected
   - Risks, alternatives considered
