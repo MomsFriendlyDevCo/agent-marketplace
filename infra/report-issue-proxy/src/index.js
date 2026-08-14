@@ -68,13 +68,20 @@ function mapPriority(priority) {
 
 async function createFreedcampIssue(env, req) {
   const auth = await freedcampAuthParams(env.FREEDCAMP_API_KEY, env.FREEDCAMP_API_SECRET);
+  // Freedcamp's v1 API takes the actual resource fields JSON-encoded inside a
+  // single `data` form parameter, not as flat form fields alongside the auth
+  // params — confirmed against the live API (see README.md Notes), which
+  // rejects a flat-field body with "'data' field was not found in the
+  // request."
   const body = new URLSearchParams({
     ...auth,
-    title: req.title,
-    description: req.description,
-    project_id: String(req.project_id),
-    type: mapType(req.type),
-    priority: String(mapPriority(req.priority)),
+    data: JSON.stringify({
+      title: req.title,
+      description: req.description,
+      project_id: String(req.project_id),
+      type: mapType(req.type),
+      priority: mapPriority(req.priority),
+    }),
   });
 
   const res = await fetch(`${FREEDCAMP_BASE}/issues`, {

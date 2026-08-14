@@ -143,10 +143,18 @@ mind test-posting to).
 ## Notes
 
 - The Freedcamp auth scheme (HMAC-SHA1 of `api_key + timestamp`, keyed by the
-  secret) and the `POST /issues` response shape were confirmed empirically:
-  a local `wrangler dev` run with fake credentials produced a real
-  `"Passed API key is invalid"` response from Freedcamp's actual API, so the
-  endpoint/request shape is right — only the credential values need to be real.
+  secret) was confirmed empirically against a fake API key. That test used a
+  bad key deliberately, though, so it only proved the auth params were being
+  read — it never actually reached Freedcamp's body-shape validation, and the
+  request body shape (flat form fields) turned out to be wrong: with a real
+  key, Freedcamp rejected it with `"'data' field was not found in the
+  request. Data should be passed as a POST form-data parameter with name
+  'data' and JSON-encoded value."` The resource fields (`title`,
+  `description`, `project_id`, `type`, `priority`) are now JSON-encoded inside
+  a single `data` form parameter instead, per that hint — this fix is derived
+  from the error message's stated contract, not yet re-confirmed as
+  succeeding end-to-end, so treat it as the current best understanding rather
+  than a settled fact until a real request comes back `ok: true`.
 - `AUTH_RATE_LIMITER` (`wrangler.jsonc`, 20 requests/60s per token) caps abuse
   of a single token — confirmed locally: 20 requests return 401 (wrong test
   token), the 21st onward return 429. This does not replace rotation if a
