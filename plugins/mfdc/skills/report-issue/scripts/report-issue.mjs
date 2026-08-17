@@ -31,51 +31,27 @@
  *                                          independently if it leaks
  *   REPORT_ISSUE_PROXY_PROJECT_ID       — numeric Freedcamp project_id to
  *                                          file into; not a secret, safe to
- *                                          commit in this repo's own .env
+ *                                          commit in the calling project's
+ *                                          own env config
  *   REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID — Slack channel ID (e.g. C0123456789,
  *                                          not a channel name) to post the
  *                                          announcement to; also not a
  *                                          secret, safe to commit
  * Missing vars are a hard error (not a silent no-op) — this posts to real,
  * team-visible systems and a silently-skipped post is worse than a crash.
- * A `.env` file is auto-loaded by walking up from the current directory if one
- * exists, without overriding anything already set in the real environment.
+ * This script does NOT load any .env-style file itself and has no opinion on
+ * dotenv filenames or precedence — it only reads process.env. Loading the
+ * right env vars into the process before this script runs is the calling
+ * project's responsibility (its own dotenv tooling, `just` recipe, shell
+ * profile, whatever it already uses), so the same skill works unmodified
+ * across projects with different env-file conventions.
  */
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
+import { readFileSync } from "node:fs";
 import readline from "node:readline";
 
 const ALLOWED_TYPES = ["fix", "feature", "refactor"];
 const ALLOWED_PRIORITIES = ["low", "medium", "high"];
 const TITLE_PREFIX_BY_FLAG = { fix: "[Fix]", feature: "[Feature]", refactor: "[Refactor]" };
-
-function loadDotEnvUpwards(startDir) {
-  let dir = startDir;
-  for (let i = 0; i < 6; i++) {
-    const candidate = path.join(dir, ".env");
-    if (existsSync(candidate)) {
-      for (const line of readFileSync(candidate, "utf8").split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#")) continue;
-        const eq = trimmed.indexOf("=");
-        if (eq === -1) continue;
-        const key = trimmed.slice(0, eq).trim();
-        let value = trimmed.slice(eq + 1).trim();
-        if (
-          (value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))
-        ) {
-          value = value.slice(1, -1);
-        }
-        if (process.env[key] === undefined) process.env[key] = value;
-      }
-      return;
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) return;
-    dir = parent;
-  }
-}
 
 function parseArgs(argv) {
   const flags = { type: "fix", priority: "medium", dryRun: false, yes: false };
@@ -154,7 +130,6 @@ function confirmPrompt(message) {
 }
 
 async function main() {
-  loadDotEnvUpwards(process.cwd());
   const opts = parseArgs(process.argv.slice(2));
 
   for (const [flag, name] of [

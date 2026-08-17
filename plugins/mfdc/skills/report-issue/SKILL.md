@@ -143,9 +143,16 @@ The script requires `REPORT_ISSUE_PROXY_URL`, `REPORT_ISSUE_PROXY_TOKEN`,
 `REPORT_ISSUE_PROXY_PROJECT_ID`, and `REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID`
 (all sharing the `REPORT_ISSUE_PROXY_` prefix; the last two are the numeric
 Freedcamp project and the Slack channel ID to file/post into and, unlike the
-token, aren't secrets — fine to commit in this repo's own `.env`), set in the
-shell or in a `.env` file (it auto-loads one by walking up from the current
-directory). It does **not** need the real Freedcamp/Slack credentials —
+token, aren't secrets) already present in `process.env` when it runs. The
+script does not load any `.env`-style file itself and has no opinion on
+dotenv filenames — loading these vars into the environment is the calling
+project's own responsibility, using whatever mechanism that project already
+uses for its env config. Since each poster-script invocation above is its own
+shell command, make sure that command itself ends up with the vars loaded
+(e.g. source the project's env files, or run through the project's own
+env-aware task runner, in the same command as the `node` call — a var
+exported in an earlier, separate command will not carry over). It does
+**not** need the real Freedcamp/Slack credentials —
 those live only as Worker secrets on a separately-deployed proxy (source in this
 plugin's marketplace repo, under `infra/report-issue-proxy`; see that
 directory's README for deploy/rotation). If the proxy vars are unset it fails
