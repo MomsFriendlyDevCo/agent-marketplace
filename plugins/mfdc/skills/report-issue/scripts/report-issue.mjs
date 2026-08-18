@@ -186,7 +186,10 @@ async function main() {
   const result = await postToProxy({ title: fullTitle, description, type: opts.type, priority: opts.priority });
 
   console.log("=== Done ===");
-  console.log(`Freedcamp issue #${result.freedcampIssueId}: ${result.freedcampUrl}`);
+  const ticketLabel = result.freedcampTicketNumber
+    ? `${result.freedcampTicketNumber} (#${result.freedcampIssueId})`
+    : `#${result.freedcampIssueId}`;
+  console.log(`Freedcamp issue ${ticketLabel}: ${result.freedcampUrl}`);
 }
 
 main().catch((e) => {

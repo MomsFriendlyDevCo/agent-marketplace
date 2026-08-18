@@ -171,10 +171,13 @@ working around it or guessing.
 
 ## 6. Report back
 
-Once done, give the user: the Freedcamp issue number and URL, the commit URL, and
+Once done, give the user: the Freedcamp ticket number and URL, the commit URL, and
 the paths of all three committed files (chat-log export, report, proposal). The
-issue number (e.g. `#1234`, printed by the script as `Freedcamp issue #<id>:
-<url>`) is the reference to use whenever the item comes up again — quote it when following up in Slack/Freedcamp or linking back to this
+ticket number is the project-prefixed one (e.g. `NMC-1234`, printed by the
+script as `Freedcamp issue NMC-1234 (#<id>): <url>`), not the bare numeric id
+in parentheses — that prefixed form is what the team actually uses in
+Freedcamp/Slack, so it's the reference to quote whenever the item comes up
+again, when following up in Slack/Freedcamp, or when linking back to this
 work later, rather than re-describing the issue. Don't summarize further than
 that unless asked.
 

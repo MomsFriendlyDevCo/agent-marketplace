@@ -98,7 +98,7 @@ async function createFreedcampIssue(env, req) {
     );
   }
   const issue = responseJson.data?.issues?.[0];
-  return { id: issue?.id, url: issue?.url };
+  return { id: issue?.id, url: issue?.url, numberPrefixed: issue?.number_prefixed };
 }
 
 async function postToSlack(env, channelId, text) {
@@ -194,7 +194,12 @@ export default {
         [`:mega: New issue filed to Freedcamp: *${payload.title}*`, freedcampUrl].join("\n"),
       );
 
-      return json({ ok: true, freedcampUrl, freedcampIssueId: issue.id });
+      return json({
+        ok: true,
+        freedcampUrl,
+        freedcampIssueId: issue.id,
+        freedcampTicketNumber: issue.numberPrefixed,
+      });
     } catch (e) {
       if (e instanceof Response) return e;
       return json({ ok: false, error: String(e) }, 500);
