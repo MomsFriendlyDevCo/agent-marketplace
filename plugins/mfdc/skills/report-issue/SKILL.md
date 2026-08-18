@@ -11,10 +11,12 @@ committed to the repo (a chat-log export, an initial report, and a proposal), a
 Freedcamp issue, and a Slack post — all three files are required output, not
 optional extras. Steps 0–4 are local and reversible — run them back-to-back
 without stopping for input in between (only pausing where a step itself says
-to ask, because it genuinely can't proceed without an answer). Push and
-Freedcamp/Slack are visible to other people and hard to undo — **do not run
-them without an explicit go-ahead** from the user at the two gates below, even
-in an otherwise autonomous session.
+to ask, because it genuinely can't proceed without an answer). Once
+committed, push is the one remaining gate — **do not push without an
+explicit go-ahead** from the user, even in an otherwise autonomous session.
+Filing the Freedcamp issue and posting to Slack are not a second decision:
+they happen automatically, every time, as soon as the push does. Don't ask
+about them separately.
 
 ## 0. Confirm scope
 
@@ -64,7 +66,7 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/export-chatlog.mjs \
 ```
 
 Run it from the repo root so the `--out` path resolves relative to the repo,
-same as the poster script in step 6.
+same as the poster script in step 5.
 
 The script auto-redacts common secret shapes it recognizes (API keys, tokens,
 private keys, `SECRET`/`TOKEN`/`PASSWORD`/`KEY`-style env assignments, etc.),
@@ -108,28 +110,30 @@ Stage **only** the three new files (the two docs + the chat-log export) —
 never `git add -A` here, since unrelated in-progress changes may be sitting in
 the working tree. Commit locally with a plain, factual message. Do not push yet.
 
-## 5. Gate: push
+## 5. Gate: push (Freedcamp + Slack follow automatically)
 
 This is the first stop since step 0 — show the user the commit (`git show
 --stat`) and the step 2 auto-redaction summary (what was found, if anything),
 then use `AskUserQuestion` (options: push now / hold off) rather than waiting
 for a typed go-ahead. Don't ask them to open and read through the export or
 the docs themselves — the auto-redaction pass is the content check; the ask
-here is just "OK to push?", not "please review this." Pushing is what makes
-the commit link in the Freedcamp issue resolve, and it's a shared-state,
-hard-to-undo action, so it still needs an explicit yes. Once
-approved, push and derive the commit URL from `git remote get-url origin`
-(strip a trailing `.git`; if it's an SSH-style `git@host:org/repo`, convert to
-`https://host/org/repo`) plus `/commit/<sha>`. Don't assume any particular
-host or org — read it from the repo each time.
+here is just "OK to push?", not "please review this." This is the **only**
+question in this step — filing the Freedcamp issue and posting to Slack are
+not held on a second ask; they follow the push automatically, every time.
 
-## 6. Gate: Freedcamp + Slack
+Once approved:
 
-Run the poster script (from the repo root, so relative `--report`/`--proposal`
-paths resolve — the script itself is referenced via `${CLAUDE_PLUGIN_ROOT}`,
-not a repo-relative path, since the plugin is installed outside the working
-repo) in `--dry-run` first and show the user the exact preview (title, type,
-priority, commit link) it prints:
+1. Push (`git push`), then derive the commit URL from `git remote get-url
+   origin` (strip a trailing `.git`; if it's an SSH-style
+   `git@host:org/repo`, convert to `https://host/org/repo`) plus
+   `/commit/<sha>`. Don't assume any particular host or org — read it from
+   the repo each time.
+2. Immediately run the poster script (from the repo root, so relative
+   `--report`/`--proposal` paths resolve — the script itself is referenced
+   via `${CLAUDE_PLUGIN_ROOT}`, not a repo-relative path, since the plugin is
+   installed outside the working repo) for real, with `--yes` so the
+   script's own interactive confirmation doesn't stop and wait for a second
+   answer that was already given by the push approval above:
 
 ```
 node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/report-issue.mjs \
@@ -137,20 +141,10 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/report-issue.mjs \
   --type fix|feature|refactor \
   --report docs/<PREFIX>_ISSUE-REPORT-<SLUG>.md \
   --proposal docs/<PREFIX>_ISSUE-PROPOSAL-<SLUG>.md \
-  --commit-url <commit URL from step 5> \
+  --commit-url <commit URL from step 5.1> \
   --priority low|medium|high \
-  --dry-run
+  --yes
 ```
-
-Show the preview, then use `AskUserQuestion` (options: file it / hold off) to
-confirm — same reasoning as the push gate: a small enumerable choice, not
-something to leave the user typing out. Only after they confirm, re-run the
-same command **without** `--dry-run`. The script itself will also ask for
-interactive confirmation unless `--yes` is passed — leave that prompt in place
-rather than passing `--yes`, it's the last checkpoint before the issue goes
-live and Slack fires (that prompt is the script's own CLI stdin confirmation,
-not something `AskUserQuestion` can reach into, so it stays as a typed
-response).
 
 The script requires `REPORT_ISSUE_PROXY_URL`, `REPORT_ISSUE_PROXY_TOKEN`,
 `REPORT_ISSUE_PROXY_PROJECT_ID`, and `REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID`
@@ -175,7 +169,7 @@ loudly rather than silently skipping — if that happens, stop and use
 with whoever deployed the proxy / show me the deploy README) rather than
 working around it or guessing.
 
-## 7. Report back
+## 6. Report back
 
 Once done, give the user: the Freedcamp issue number and URL, the commit URL, and
 the paths of all three committed files (chat-log export, report, proposal). The
