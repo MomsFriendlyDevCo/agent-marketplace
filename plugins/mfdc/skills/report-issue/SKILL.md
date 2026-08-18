@@ -19,8 +19,12 @@ in an otherwise autonomous session.
 ## 0. Confirm scope
 
 If it's not already obvious from the conversation, ask the user (in one line)
-what's being reported and whether it's a fix, feature, or refactor. Don't guess
-silently — the classification drives the Freedcamp `type` and the title prefix.
+what's being reported. If the fix/feature/refactor classification isn't
+already obvious either, use `AskUserQuestion` for it (options: fix / feature /
+refactor) rather than a free-text ask — it's a small, enumerable choice and
+this is the one point where getting it wrong quietly derails the rest of the
+skill. Don't guess silently — the classification drives the Freedcamp `type`
+and the title prefix.
 
 ## 1. Separate the X/Y problem
 
@@ -32,9 +36,12 @@ Before writing anything, work out — and show the user — two things:
   the ask (e.g. "the Report Access button has no working destination for signed-out
   users, so the banner is the only symptom currently visible").
 
-If X and Y differ, say so explicitly and ask the user which one to file — reporting
-only the literal ask (X) when the real gap is Y produces a fix that satisfies the
-ticket but not the actual need. This block becomes the top of the initial-report doc.
+There's no question to ask here — X and Y are always both captured, not
+alternatives to pick between. Users describe problems as solutions ("make the
+button use FOO technology!!!") when the actual need is narrower or different
+("make the button blue"); this step's job is to pull those apart and write
+down both, every time, regardless of whether they turn out to differ. This
+block becomes the top of the initial-report doc.
 
 ## 2. Export the chat log
 
@@ -105,11 +112,12 @@ the working tree. Commit locally with a plain, factual message. Do not push yet.
 
 This is the first stop since step 0 — show the user the commit (`git show
 --stat`) and the step 2 auto-redaction summary (what was found, if anything),
-and ask for a plain go-ahead to push. Don't ask them to open and read through
-the export or the docs themselves — the auto-redaction pass is the content
-check; the ask here is just "OK to push?", not "please review this." Pushing
-is what makes the commit link in the Freedcamp issue resolve, and it's a
-shared-state, hard-to-undo action, so it still needs an explicit yes. Once
+then use `AskUserQuestion` (options: push now / hold off) rather than waiting
+for a typed go-ahead. Don't ask them to open and read through the export or
+the docs themselves — the auto-redaction pass is the content check; the ask
+here is just "OK to push?", not "please review this." Pushing is what makes
+the commit link in the Freedcamp issue resolve, and it's a shared-state,
+hard-to-undo action, so it still needs an explicit yes. Once
 approved, push and derive the commit URL from `git remote get-url origin`
 (strip a trailing `.git`; if it's an SSH-style `git@host:org/repo`, convert to
 `https://host/org/repo`) plus `/commit/<sha>`. Don't assume any particular
@@ -134,10 +142,15 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/report-issue/scripts/report-issue.mjs \
   --dry-run
 ```
 
-Only after the user confirms the preview, re-run the same command **without**
-`--dry-run`. The script itself will also ask for interactive confirmation unless
-`--yes` is passed — leave that prompt in place rather than passing `--yes`, it's
-the last checkpoint before the issue goes live and Slack fires.
+Show the preview, then use `AskUserQuestion` (options: file it / hold off) to
+confirm — same reasoning as the push gate: a small enumerable choice, not
+something to leave the user typing out. Only after they confirm, re-run the
+same command **without** `--dry-run`. The script itself will also ask for
+interactive confirmation unless `--yes` is passed — leave that prompt in place
+rather than passing `--yes`, it's the last checkpoint before the issue goes
+live and Slack fires (that prompt is the script's own CLI stdin confirmation,
+not something `AskUserQuestion` can reach into, so it stays as a typed
+response).
 
 The script requires `REPORT_ISSUE_PROXY_URL`, `REPORT_ISSUE_PROXY_TOKEN`,
 `REPORT_ISSUE_PROXY_PROJECT_ID`, and `REPORT_ISSUE_PROXY_SLACK_CHANNEL_ID`
@@ -156,9 +169,11 @@ exported in an earlier, separate command will not carry over). It does
 those live only as Worker secrets on a separately-deployed proxy (source in this
 plugin's marketplace repo, under `infra/report-issue-proxy`; see that
 directory's README for deploy/rotation). If the proxy vars are unset it fails
-loudly rather than silently skipping — if that happens, stop and ask the user
-for the missing value (or whoever deployed the proxy) rather than working
-around it.
+loudly rather than silently skipping — if that happens, stop and use
+`AskUserQuestion` to ask how to proceed (options: I'll provide the value now
+[falls through to the "Other" free-text slot for the actual value] / check
+with whoever deployed the proxy / show me the deploy README) rather than
+working around it or guessing.
 
 ## 7. Report back
 
